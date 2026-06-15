@@ -93,7 +93,8 @@ def classify_text(text: str, categories: list) -> dict:
     try:
         response = ollama.generate(
             model="mistral:7b-instruct-q4_K_M",
-            prompt=prompt
+            prompt=prompt,
+            format='json'
         )
         raw = response['response'].strip()
 
@@ -102,15 +103,15 @@ def classify_text(text: str, categories: list) -> dict:
         if json_match:
             raw = json_match.group(0)
 
-        resultado = json.loads(raw)
+        result = json.loads(raw)
 
         # Validate and normalise keys
-        if 'category' not in resultado:
-            resultado['categoria'] = "Not classified"
-        if 'doc_date' not in resultado:
-            resultado['doc_date'] = None
+        if 'category' not in result:
+            result['categoria'] = "Not classified"
+        if 'doc_date' not in result:
+            result['doc_date'] = None
 
-        return resultado
+        return result
     except Exception as e:
         logging.error(f"Classification error with Ollama: {e}")
         return {"category": "Error", "doc_date": None}
