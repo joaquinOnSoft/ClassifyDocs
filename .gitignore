@@ -1,0 +1,5 @@
+# Virtual environment
+.venv/
+
+# idea folder, uncomment if you don't need it
+.idea

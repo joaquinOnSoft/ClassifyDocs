@@ -1,0 +1,25 @@
+services:
+  classifier:
+    build: .
+    container_name: mistral-classifier
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ollama_bind:/root/.ollama   # montaje del volumen nombrado (bind)
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 8G
+
+volumes:
+  ollama_bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: C:/Users/jgarzonpena/.ollama   # ruta de tu host (barras normales)
+      o: bind

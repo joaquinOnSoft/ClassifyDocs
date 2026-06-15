@@ -1,0 +1,9 @@
+fastapi==0.137.1
+uvicorn[standard]==0.49.0
+python-multipart==0.0.32
+ollama==0.6.2
+pypdf==6.13.2
+pdf2image==1.17.0
+pytesseract==0.3.13
+Pillow==12.2.0
+python-magic==0.4.27
