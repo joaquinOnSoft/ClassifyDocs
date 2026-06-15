@@ -87,8 +87,7 @@ def classify_text(text: str, categories: list) -> dict:
             - "doc_date": the date found in YYYY-MM-DD format. If you cannot find a date, use null.
             - Example response: {{"category": "Factura", "doc_date": "2024-03-15"}}
             - Do not include any explanations; just the JSON.
-
-        
+            - If the category name is included in the file name, use that category for the file.       
         """
     try:
         response = ollama.generate(
