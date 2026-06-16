@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from typing import Optional, Literal
 
 import magic
 import ollama
@@ -8,8 +9,28 @@ import pytesseract
 from PIL import Image
 from pdf2image import convert_from_path
 from pypdf import PdfReader
+from pydantic import BaseModel, Field
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+
+# Define the permitted categories exactly as specified in the question
+CategoriaType = Literal[
+    "Acuerdo marco",
+    "Adjudicación de licitación",
+    "Albaran / Nota de entrega",
+    "Contrato",
+    "Factura",
+    "Pedido",
+    "Pliego",
+    "Quotation / oferta"
+]
+
+
+class ClassificationResult(BaseModel):
+    category: CategoriaType
+    # The date is optional and must follow the YYYY-MM-DD format
+    doc_date: Optional[str] = Field(None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+
 
 # -------------------------------------------------------------
 # Extracting text from various file formats
@@ -49,68 +70,122 @@ def extract_text_from_file(file_path: str) -> str:
 
     return text.strip()
 
+
+# -------------------------------------------------------------
+# Helper to clean Markdown code blocks from model responses
+# -------------------------------------------------------------
+
+def clean_model_response(raw_response: str) -> str:
+    """
+    Extract JSON from a model response that may be wrapped in markdown code blocks.
+    Handles ```json, ```, and plain text with embedded JSON.
+    """
+    cleaned = raw_response.strip()
+
+    # Pattern to match Markdown code blocks: ```json ... ``` or ``` ... ```
+    code_block_pattern = r"```(?:json)?\s*\n?(.*?)\n?```"
+    match = re.search(code_block_pattern, cleaned, re.DOTALL)
+
+    if match:
+        # Extract the content inside the code block
+        return match.group(1).strip()
+
+    # If no code block found, try to find the first JSON object directly
+    json_pattern = r"\{.*\}"
+    match = re.search(json_pattern, cleaned, re.DOTALL)
+    if match:
+        return match.group(0).strip()
+
+    # If all else fails, return the original response
+    return cleaned
+
+
 # -------------------------------------------------------------
 # Date classification and extraction using LLM
 # -------------------------------------------------------------
 
-def classify_text(text: str, categories: list) -> dict:
+def classify_text(filename: str, text: str, categories: list) -> dict:
     """
     Send the text to Ollama (Mistral 7B model) and it returns a dictionary
     with the keys 'category' and 'doc_date'. The model extracts the date from the content.
     """
-    # Limitar longitud para evitar sobrecarga del modelo
+    # Limit the length to prevent the model from becoming overloaded
     #text_limit = text[:3000]
     text_limit = text
 
     prompt = f"""
-        You are an expert document classifier. Your task is:
-        1. Assign the following document to ONE of the categories listed.
-        2. Extract the DATE from the document (issue date, contract date, invoice date, etc.) in YYYY-MM-DD format.
-        
-        Categories:
-        {chr(10).join(f'- {c}' for c in categories)}
-        
-        Document:
-        \"\"\"{text_limit}\"\"\"
-        
-        Instructions:
-        - Respond ONLY with a valid JSON object,...
-        {chr(10).join(f'- {c}' for c in categories)}
-        
-        Documentt:
-        \"\"\"{text_limit}\"\"\"
-        
-        Instructions:
-            - Respond ONLY with a valid JSON object, with no additional text.
-            - The JSON must contain exactly two keys: "category" and "doc_date".
-            - "category": the exact name of one of the listed categories. If you are unsure, choose the most likely one.
-            - "doc_date": the date found in YYYY-MM-DD format. If you cannot find a date, use null.
-            - Example response: {{"category": "Factura", "doc_date": "2024-03-15"}}
-            - Do not include any explanations; just the JSON.
-            - If the category name is included in the file name, use that category for the file.       
-        """
+    You are an expert document classifier specialized in Spanish business documents. Your task is:
+        1. Classify the document into one of the predefined categories.
+        2. Extract the most relevant date (issue date, contract date, invoice date, etc.) in YYYY-MM-DD format.
+
+    **Document context:**
+        - Filename: {filename}
+        - Content: {text_limit}
+
+    **Categories with descriptions:**
+        - "Acuerdo marco": Framework agreement, a long-term contract establishing general terms.
+        - "Adjudicación de licitación": Tender award, official notification of a winning bid.
+        - "Albaran / Nota de entrega": Delivery note, accompanies goods shipment.
+        - "Contrato": Contract, a formal agreement between parties.
+        - "Factura": Invoice, a bill for goods/services provided.
+        - "Pedido": Purchase order, a request to buy goods/services.
+        - "Pliego": Tender specifications, document outlining requirements for a bid.
+        - "Quotation / oferta": Quotation or offer, a price proposal.
+
+    **Instructions:**
+    - First, analyze the document content to determine the category and date.
+    - Use the filename only as a hint; the content is more authoritative.
+    - For date extraction:
+      - Look for explicit date indicators: "Fecha", "Fecha de emisión", "Fecha de pedido", "Fecha de factura", "Fecha de contrato", etc.
+      - Also look for dates in common Spanish formats: dd/mm/yyyy, dd.mm.yyyy, dd-mm-yyyy, dd de [month] de yyyy.
+      - If the document contains multiple dates, choose the one that best corresponds to the document's type (e.g., for "Factura" use the invoice date, for "Contrato" use the signing date).
+      - If no date is found in the content, check the filename for dates (patterns like yyyy-mm-dd, dd.mm.yyyy, etc.) and use that.
+      - Convert all dates to YYYY-MM-DD (e.g., "04.03.2025" -> "2025-03-04", "5 de marzo de 2025" -> "2025-03-05").
+      - If a date is ambiguous (e.g., 04/03/2025), assume day/month/year (Spanish convention) unless context suggests otherwise.
+      - If absolutely no date can be found, set doc_date to null.
+
+    **Response format:**
+    - Respond only with a JSON object containing exactly two keys: "category" and "doc_date".
+    - The "category" MUST match one of the categories provided in the "Categories with descriptions" section. 
+    - **CRITICAL:** The "doc_date" MUST be a string in the exact format 'YYYY-MM-DD'.
+    - For example, if the document shows "04.03.2025", you MUST respond with "2025-03-04".
+    - If the document shows "5 de marzo de 2025", you MUST respond with "2025-03-05".
+    - Do not use any other format like 'dd.mm.yyyy', 'dd/mm/yyyy', or 'dd-mm-yyyy'.
+    - If absolutely no date can be found, set doc_date to null.
+    - Example: {{"category": "Factura", "doc_date": "2025-03-04"}}
+    - Do not include any extra text or explanations.
+
+    **Examples:**
+    - Input: Filename "Factura 27391763 - 04.03.2025.pdf", content mentions "Fecha de emisión: 04/03/2025". Output: {{"category": "Factura", "doc_date": "2025-03-04"}}
+    - Input: Filename "Contrato 2025-03-05 ABC.pdf", content has "Firma: 5 de marzo de 2025". Output: {{"category": "Contrato", "doc_date": "2025-03-05"}}
+    - Input: Filename "Pedido 12345.pdf", content has no date but mentions "Fecha pedido: 2025-01-15". Output: {{"category": "Pedido", "doc_date": "2025-01-15"}}
+    - Input: Filename "Albarán 2025-03-05 51350855.pdf", content has "Fecha de entrega: 05-03-2025". Output: {{"category": "Albaran / Nota de entrega", "doc_date": "2025-03-05"}}
+
+    **Now classify the following document:**
+    """
+
     try:
+        # Call Ollama with JSON format forced via Pydantic schema
         response = ollama.generate(
             model="mistral:7b-instruct-q4_K_M",
             prompt=prompt,
-            format='json'
+            format=ClassificationResult.model_json_schema(),
+            options={"temperature": 0.0}
         )
-        raw = response['response'].strip()
 
-        # Extract the first complete JSON block (in case there is noise)
-        json_match = re.search(r'\{.*\}', raw, re.DOTALL)
-        if json_match:
-            raw = json_match.group(0)
+        raw = response.get('response', '').strip()
+        if not raw:
+            logging.error("The model response is empty")
+            return {"category": "Error", "doc_date": None}
 
-        result = json.loads(raw)
+        # Clean the response to remove Markdown code blocks
+        cleaned_raw = clean_model_response(raw)
+        logging.info(f"Cleaned response: {cleaned_raw[:200]}...")
 
-        # Validate and normalise keys
-        if 'category' not in result:
-            result['categoria'] = "Not classified"
-        if 'doc_date' not in result:
-            result['doc_date'] = None
+        # Validate with Pydantic using the cleaned response
+        result = ClassificationResult.model_validate_json(json_data=cleaned_raw)
+        return result.model_dump()
 
-        return result
     except Exception as e:
         logging.error(f"Classification error with Ollama: {e}")
         return {"category": "Error", "doc_date": None}

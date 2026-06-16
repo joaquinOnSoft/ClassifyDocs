@@ -43,6 +43,13 @@ docker compose logs -f classifier
      - Body params:
        - file: Path to the file to be classified
 
+## Swagger documentation
+
+Swagger documentation is available on this URL [http://localhost:8000/docs](http://localhost:8000/docs), 
+when the container is up. 
+
+![Swagger documentation](images/document-classifier-api.png)
+
 ## Test the REST API from the command line
 
 ```shell

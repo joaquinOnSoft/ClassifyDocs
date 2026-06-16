@@ -1,27 +1,41 @@
 import os
 import tempfile
 import logging
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
+
+
 from app.utils import extract_text_from_file, classify_text
 
 app = FastAPI(title="Document Classifier API", description="Sort documents and extract dates using Mistral 7B")
 
 CATEGORIES = [
-    "Acuerdo marco",
-    "Adjudicación de licitación",
-    "Albaran / Nota de entrega",
-    "Contrato",
-    "Factura",
-    "Pedido",
-    "Pliego",
-    "Quotation / oferta"
-]
+        "Acuerdo marco",
+        "Adjudicación de licitación",
+        "Albaran / Nota de entrega",
+        "Contrato",
+        "Factura",
+        "Pedido",
+        "Pliego",
+        "Quotation / oferta"
+    ]
 
-@app.post("/classifydoc")
+
+@app.post("/classifier/v1/classify")
 async def classify_document(file: UploadFile = File(...)):
     """
     POST endpoint to classify a document and extract its date.
     It receives a file and returns the category and the date (extracted by the LLM).
+
+    These are the default categories used:
+        - Acuerdo marco
+        - Adjudicación de licitación
+        - Albaran / Nota de entrega
+        - Contrato
+        - Factura
+        - Pedido
+        - Pliego
+        - Quotation / oferta
     """
     tmp_path = None
     try:
@@ -36,12 +50,12 @@ async def classify_document(file: UploadFile = File(...)):
         if not texto or len(texto.strip()) < 20:
             raise HTTPException(status_code=400, detail="It was not possible to extract enough text from the document")
 
-        # Clasificar y extraer fecha usando el LLM
-        resultado_llm = classify_text(texto, CATEGORIES)
+        # Classify and extract dates using the LLM
+        llm_result = classify_text(file.filename, texto, CATEGORIES)
 
         return {
-            "category": resultado_llm["category"],
-            "doc_date": resultado_llm["doc_date"],
+            "category": llm_result["category"],
+            "doc_date": llm_result["doc_date"],
             "filename": file.filename
         }
 
@@ -51,7 +65,7 @@ async def classify_document(file: UploadFile = File(...)):
         logging.exception("Classification error")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        # Limpiar archivo temporal
+        # Clear temporary files
         if tmp_path and os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
