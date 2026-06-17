@@ -6,11 +6,11 @@ ollama serve &
 OLLAMA_PID=$!
 
 # Wait until Ollama is ready
-echo "Esperando a que Ollama inicie..."
+echo "Waiting for Ollama to start..."
 until ollama list > /dev/null 2>&1; do
     sleep 1
 done
-echo "Ollama listo."
+echo "Ollama ready."
 
 # Download the model if it does not exist
 MODEL="mistral:7b-instruct-q4_K_M"

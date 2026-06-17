@@ -5,8 +5,10 @@ cls
 
 set "COMPOSE_FILE=docker-compose.yaml;docker-compose.windows.yaml"
 
-docker compose down -v
-docker compose build --no-cache
+REM Build image
+docker compose build
+
+REM Resume service
 docker compose up -d
 
 endlocal

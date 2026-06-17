@@ -12,12 +12,12 @@ app = FastAPI(title="Document Classifier API", description="Sort documents and e
 CATEGORIES = [
         "Acuerdo marco",
         "Adjudicación de licitación",
-        "Albaran / Nota de entrega",
+        "Albaran",
         "Contrato",
         "Factura",
+        "Oferta",
         "Pedido",
-        "Pliego",
-        "Quotation / oferta"
+        "Pliego"
     ]
 
 
@@ -30,12 +30,12 @@ async def classify_document(file: UploadFile = File(...)):
     These are the default categories used:
         - Acuerdo marco
         - Adjudicación de licitación
-        - Albaran / Nota de entrega
+        - Albaran
         - Contrato
         - Factura
+        - Oferta
         - Pedido
         - Pliego
-        - Quotation / oferta
     """
     tmp_path = None
     try:

@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ollama_bind:/root/.ollama   # montaje del volumen nombrado (bind)
+      - ollama_bind:/root/.ollama   # mounting the named volume (bind)
     environment:
       - OLLAMA_HOST=http://localhost:11434
     deploy:
@@ -21,5 +21,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: C:/Users/jgarzonpena/.ollama   # ruta de tu host (barras normales)
+      device: /opt/idol/idol-containers-toolkit/common-files/docker-volumes/classifier   # ruta de tu host (barras normales)
       o: bind

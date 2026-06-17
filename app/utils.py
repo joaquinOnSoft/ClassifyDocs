@@ -20,9 +20,9 @@ CategoriaType = Literal[
     "Albaran / Nota de entrega",
     "Contrato",
     "Factura",
+    "Oferta",
     "Pedido",
-    "Pliego",
-    "Quotation / oferta"
+    "Pliego"
 ]
 
 
@@ -125,12 +125,12 @@ def classify_text(filename: str, text: str, categories: list) -> dict:
     **Categories with descriptions:**
         - "Acuerdo marco": Framework agreement, a long-term contract establishing general terms.
         - "Adjudicación de licitación": Tender award, official notification of a winning bid.
-        - "Albaran / Nota de entrega": Delivery note, accompanies goods shipment.
+        - "Albaran": Delivery note, accompanies goods shipment. It can be also called "Nota de entrega" in Spanish.
         - "Contrato": Contract, a formal agreement between parties.
         - "Factura": Invoice, a bill for goods/services provided.
+        - "Oferta": Quotation or offer, a price proposal.        
         - "Pedido": Purchase order, a request to buy goods/services.
         - "Pliego": Tender specifications, document outlining requirements for a bid.
-        - "Quotation / oferta": Quotation or offer, a price proposal.
 
     **Instructions:**
     - First, analyze the document content to determine the category and date.

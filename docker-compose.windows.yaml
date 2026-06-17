@@ -1,0 +1,4 @@
+volumes:
+  ollama_bind:
+    driver_opts:
+      device: "${USERPROFILE_HOST:-C:/Users/jgarzonpena}/.ollama"  # ruta de tu host (barras normales)

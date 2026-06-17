@@ -1,6 +1,6 @@
 # ClassifyDocs
 
-Classify a document using a large language model (LLM) into a set of predefined categories:
+A Docker container that exposes a REST API to classify a document using a large language model (LLM) into a set of predefined categories:
 
  - Acuerdo marco
  - Adjudicación de licitación
@@ -58,7 +58,7 @@ when the container is up.
 
 ```shell
 #  Example using curl 
-curl -X POST "http://localhost:8000/classifydoc" -F "file=\n/ruta/a/tu/documento.pdf"
+curl -X POST "http://localhost:8000/classifier/v1/classify" -F "file=@/path/to/your/document.pdf"
 ```
 
 # Application Architecture: Document Classifier API
