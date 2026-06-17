@@ -13,6 +13,7 @@ Classify a document using a large language model (LLM) into a set of predefined 
 
 ## Construction and implementation
 
+The solution use [Docker](https://www.docker.com/) to share, and run a container applications.
 ```shell
 # Build image
 docker compose build
@@ -20,7 +21,7 @@ docker compose build
 # Resume service
 docker compose up -d
 
-# See logs
+# See logs (optional)
 docker compose logs -f classifier
 ```
 
@@ -41,7 +42,10 @@ docker compose logs -f classifier
  - Methods:
    - **[POST]** `/classifier/v1/classify`: Classify a document using a large language model (LLM) into a set of predefined categories
      - Body params:
-       - file: Path to the file to be classified
+       - file: Path to the file to be cla
+
+> **DISCLAIMER**: This API has been developed as a proof of concept. It doesn't include any authentication/security measure.
+> So, it's not suitable for a production environment. It should be used as an example or for illustrative purposes.
 
 ## Swagger documentation
 
