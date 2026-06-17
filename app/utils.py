@@ -106,7 +106,7 @@ def clean_model_response(raw_response: str) -> str:
 
 def classify_text(filename: str, text: str, categories: list) -> dict:
     """
-    Send the text to Ollama (Mistral 7B model) and it returns a dictionary
+    Send the text to Ollama and it returns a dictionary
     with the keys 'category' and 'doc_date'. The model extracts the date from the content.
     """
     # Limit the length to prevent the model from becoming overloaded
@@ -146,7 +146,7 @@ def classify_text(filename: str, text: str, categories: list) -> dict:
 
     **Response format:**
     - Respond only with a JSON object containing exactly two keys: "category" and "doc_date".
-    - The "category" MUST match one of the categories provided in the "Categories with descriptions" section. 
+    - **CRITICAL:** The "category" MUST match one of the categories provided in the "Categories with descriptions" section. 
     - **CRITICAL:** The "doc_date" MUST be a string in the exact format 'YYYY-MM-DD'.
     - For example, if the document shows "04.03.2025", you MUST respond with "2025-03-04".
     - If the document shows "5 de marzo de 2025", you MUST respond with "2025-03-05".
@@ -167,7 +167,7 @@ def classify_text(filename: str, text: str, categories: list) -> dict:
     try:
         # Call Ollama with JSON format forced via Pydantic schema
         response = ollama.generate(
-            model="mistral:7b-instruct-q4_K_M",
+            model="gemma4:e2b",
             prompt=prompt,
             format=ClassificationResult.model_json_schema(),
             options={"temperature": 0.0}

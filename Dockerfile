@@ -16,5 +16,5 @@ RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
 COPY app/ ./app/
 COPY scripts/ ./scripts/
 
-EXPOSE 11434 8000
+EXPOSE 11434 9191
 ENTRYPOINT ["./scripts/entrypoint.sh"]

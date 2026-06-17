@@ -13,7 +13,8 @@ done
 echo "Ollama ready."
 
 # Download the model if it does not exist
-MODEL="mistral:7b-instruct-q4_K_M"
+#MODEL="mistral:7b-instruct-q4_K_M"
+MODEL="gemma4:e2b"
 if ! ollama list | grep -q "$MODEL"; then
     echo "Downloading model $MODEL ..."
     ollama pull $MODEL
@@ -24,7 +25,7 @@ fi
 
 # Launch the FastAPI API
 cd /app
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 9191
 
 # If Uvicorn ends, kill Ollama
 kill $OLLAMA_PID

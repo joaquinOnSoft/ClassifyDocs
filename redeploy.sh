@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cls
+clear
 
 docker compose down -v
 docker compose build --no-cache

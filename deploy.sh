@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cls
+clear
 
 # Build image
 docker compose build

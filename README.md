@@ -38,7 +38,7 @@ docker compose logs -f classifier
 
 ## REST API exposed
 
- - Base URL: http://localhost:8000
+ - Base URL: http://localhost:9191
  - Methods:
    - **[POST]** `/classifier/v1/classify`: Classify a document using a large language model (LLM) into a set of predefined categories
      - Body params:
@@ -49,7 +49,7 @@ docker compose logs -f classifier
 
 ## Swagger documentation
 
-Swagger documentation is available on this URL [http://localhost:8000/docs](http://localhost:8000/docs), 
+Swagger documentation is available on this URL [http://localhost:9191/docs](http://localhost:9191/docs), 
 when the container is up. 
 
 ![Swagger documentation](images/document-classifier-api.png)
@@ -58,7 +58,7 @@ when the container is up.
 
 ```shell
 #  Example using curl 
-curl -X POST "http://localhost:8000/classifier/v1/classify" -F "file=@/path/to/your/document.pdf"
+curl -X POST "http://localhost:9191/classifier/v1/classify" -F "file=@/path/to/your/document.pdf"
 ```
 
 # Application Architecture: Document Classifier API
@@ -84,7 +84,7 @@ The classification process follows these steps:
 2.  **Temporary Storage**: The uploaded file is temporarily saved to the local filesystem. This is necessary for `extract_text_from_file` to access the file content.
 3.  **Text Extraction**: The `extract_text_from_file` utility (located in `app/utils.py`) reads the temporary file and extracts its textual content. This utility is designed to handle various document types (e.g., PDF, images via OCR, plain text).
 4.  **Content Validation**: After extraction, the text is validated to ensure sufficient content was retrieved. If not, a `400 Bad Request` error is returned.
-5.  **LLM Classification**: The extracted text is then passed to the `classify_text` function (also in `app/utils.py`). This function interacts with an LLM (likely **Mistral 7B** via **Ollama**) to:
+5.  **LLM Classification**: The extracted text is then passed to the `classify_text` function (also in `app/utils.py`). This function interacts with an LLM to:
     *   Determine the document's category from a predefined list (`CATEGORIES`).
     *   Extract a significant date from the document's content.
 6.  **Response Generation**: The results from the LLM (category and date) are combined with the original filename and returned as a JSON response to the client.
@@ -101,12 +101,13 @@ The `app/utils.py` module encapsulates the core logic for text extraction and LL
     *   This is the interface to the Large Language Model.
     *   It sends the extracted `text` and the list of `categories` to the LLM.
     *   The error message `BaseModel.model_validate_json() missing 1 required positional argument: 'json_data'` suggests that this function is expecting the LLM's response to be a JSON string that can be parsed into a Pydantic `BaseModel` (or similar validation model), but it's not receiving the expected `json_data` argument, or the LLM's output isn't in the expected JSON format for direct validation.
-    *   It uses **Ollama** as the runtime for the **Mistral 7B** LLM, which implies local deployment or access to an Ollama server.
+    *   It uses **Ollama** as the runtime for the LLM, which implies local deployment or access to an Ollama server.
 
 ## 4. LLM Integration (Ollama & Mistral 7B)
 
 *   **Ollama**: Serves as the local LLM inference server. It allows running large language models like Mistral 7B locally.
-*   **Mistral 7B**: The specific Large Language Model used for classification and date extraction. It's chosen for its balance of performance and efficiency.
+*   ~~**Mistral 7B**: The specific Large Language Model used for classification and date extraction. It's chosen for its balance of performance and efficiency.~~
+*   **gemma4:e2b**: The specific Large Language Model used for classification and date extraction. It's chosen for its balance of performance and efficiency. 
 
 ## Architecture Diagram (Conceptual)
 
@@ -125,7 +126,7 @@ The `app/utils.py` module encapsulates the core logic for text extraction and LL
                                        V                                V
                             +----------+-------------+       +----------+----------+
                             | Temporary File Storage |       |   Ollama Server     |
-                            |    (for uploaded file) |<------>|   (Mistral 7B LLM)  |
+                            |    (for uploaded file) |<------>|   (gemma4:e2b)     |
                             +------------------------+       +---------------------+
                                        ^
                                        |

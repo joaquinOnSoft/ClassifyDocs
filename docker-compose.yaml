@@ -1,10 +1,10 @@
 services:
   classifier:
     build: .
-    container_name: mistral-classifier
+    container_name: llm-classifier
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "9191:9191"
     volumes:
       - ollama_bind:/root/.ollama   # mounting the named volume (bind)
     environment:

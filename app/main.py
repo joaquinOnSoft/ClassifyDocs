@@ -7,7 +7,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 
 from app.utils import extract_text_from_file, classify_text
 
-app = FastAPI(title="Document Classifier API", description="Sort documents and extract dates using Mistral 7B")
+app = FastAPI(title="Document Classifier API", description="Sort documents and extract dates using a LLM")
 
 CATEGORIES = [
         "Acuerdo marco",
@@ -71,4 +71,4 @@ async def classify_document(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=9191)
