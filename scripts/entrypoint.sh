@@ -14,7 +14,7 @@ echo "Ollama ready."
 
 # Download the model if it does not exist
 #MODEL="mistral:7b-instruct-q4_K_M"
-MODEL="gemma4:e2b"
+MODEL="${OLLAMA_MODEL_NAME:-gemma4:e2b}"
 if ! ollama list | grep -q "$MODEL"; then
     echo "Downloading model $MODEL ..."
     ollama pull $MODEL

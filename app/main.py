@@ -1,9 +1,8 @@
+import logging
 import os
 import tempfile
-import logging
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
-
 
 from app.utils import extract_text_from_file, classify_text
 
@@ -14,6 +13,7 @@ CATEGORIES = [
         "Adjudicación de licitación",
         "Albaran",
         "Contrato",
+        "Desconocido",
         "Factura",
         "Oferta",
         "Pedido",
@@ -32,6 +32,7 @@ async def classify_document(file: UploadFile = File(...)):
         - Adjudicación de licitación
         - Albaran
         - Contrato
+        - Desconocido
         - Factura
         - Oferta
         - Pedido

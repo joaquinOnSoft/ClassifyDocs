@@ -6,7 +6,8 @@ cls
 set "COMPOSE_FILE=docker-compose.yaml;docker-compose.windows.yaml"
 
 docker compose down -v
-docker compose build --no-cache
-docker compose up -d
+REM docker compose build --no-cache
+REM docker compose up -d
+docker-compose up -d --build --force-recreate
 
 endlocal

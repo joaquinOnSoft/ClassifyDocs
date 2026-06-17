@@ -1,5 +1,5 @@
-import json
 import logging
+import os
 import re
 from typing import Optional, Literal
 
@@ -8,8 +8,8 @@ import ollama
 import pytesseract
 from PIL import Image
 from pdf2image import convert_from_path
-from pypdf import PdfReader
 from pydantic import BaseModel, Field
+from pypdf import PdfReader
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -19,6 +19,7 @@ CategoriaType = Literal[
     "Adjudicación de licitación",
     "Albaran / Nota de entrega",
     "Contrato",
+    "Desconocido",
     "Factura",
     "Oferta",
     "Pedido",
@@ -127,6 +128,7 @@ def classify_text(filename: str, text: str, categories: list) -> dict:
         - "Adjudicación de licitación": Tender award, official notification of a winning bid.
         - "Albaran": Delivery note, accompanies goods shipment. It can be also called "Nota de entrega" in Spanish.
         - "Contrato": Contract, a formal agreement between parties.
+        - "Desconocido": Used only when the document doesn't match any of the other categories.
         - "Factura": Invoice, a bill for goods/services provided.
         - "Oferta": Quotation or offer, a price proposal.        
         - "Pedido": Purchase order, a request to buy goods/services.
@@ -150,7 +152,7 @@ def classify_text(filename: str, text: str, categories: list) -> dict:
     - **CRITICAL:** The "doc_date" MUST be a string in the exact format 'YYYY-MM-DD'.
     - For example, if the document shows "04.03.2025", you MUST respond with "2025-03-04".
     - If the document shows "5 de marzo de 2025", you MUST respond with "2025-03-05".
-    - Do not use any other format like 'dd.mm.yyyy', 'dd/mm/yyyy', or 'dd-mm-yyyy'.
+    - Do not use any other format like 'dd.mm.yyyy', 'dd/mm/yyyy', or 'dd-mm-yyyy'.    
     - If absolutely no date can be found, set doc_date to null.
     - Example: {{"category": "Factura", "doc_date": "2025-03-04"}}
     - Do not include any extra text or explanations.
@@ -167,7 +169,7 @@ def classify_text(filename: str, text: str, categories: list) -> dict:
     try:
         # Call Ollama with JSON format forced via Pydantic schema
         response = ollama.generate(
-            model="gemma4:e2b",
+            model= os.getenv("OLLAMA_MODEL_NAME", "gemma4:e2b"),
             prompt=prompt,
             format=ClassificationResult.model_json_schema(),
             options={"temperature": 0.0}

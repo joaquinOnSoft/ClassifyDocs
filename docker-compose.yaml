@@ -9,6 +9,7 @@ services:
       - ollama_bind:/root/.ollama   # mounting the named volume (bind)
     environment:
       - OLLAMA_HOST=http://localhost:11434
+      - OLLAMA_MODEL_NAME=${OLLAMA_MODEL_NAME:-gemma4:e2b}
     deploy:
       resources:
         limits:
